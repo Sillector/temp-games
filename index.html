@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Игра SWF с Ruffle</title>
     <!-- Подключение Ruffle JS -->
-    <script src="https://unpkg.com/ruffle@latest/dist/ruffle.js"></script>
+    <script src="https://unpkg.com/@ruffle-rs/ruffle"></script>
     <style>
         #game-container {
             width: 800px;
@@ -18,9 +18,7 @@
 </head>
 <body>
     <!-- Контейнер для игры -->
-    <div id="game-container">
-        <ruffle-player id="game" style="width:800px; height:600px;" data-swf="https://m.igroutka.ru/ya/25/igra-chudo-ferma.swf"></ruffle-player>
-    </div>
+    <div id="game-container"></div>
     <!-- Кнопки управления -->
     <div id="controls">
         <button id="fullscreen-btn">На весь экран</button>
@@ -29,19 +27,35 @@
     </div>
     <script>
         // Получение элементов страницы
-        const gameElement = document.getElementById('game');
+        const gameContainer = document.getElementById('game-container');
         const fullscreenBtn = document.getElementById('fullscreen-btn');
         const saveBtn = document.getElementById('save-btn');
         const deleteSaveBtn = document.getElementById('delete-save-btn');
 
+        let ruffleInstance;
+
+        // Создание и настройка Ruffle Player
+        document.addEventListener('DOMContentLoaded', async () => {
+            const ruffle = window.RufflePlayer.newest();
+            ruffle.config = {
+                // Настройки Ruffle, если необходимо
+            };
+            ruffleInstance = ruffle.createPlayer();
+            gameContainer.appendChild(ruffleInstance);
+            await ruffleInstance.load('game.swf');
+
+            // Загрузка сохраненного состояния
+            loadGameState();
+        });
+
         // Функция для перехода в полный экран
         fullscreenBtn.addEventListener('click', () => {
-            if (gameElement.requestFullscreen) {
-                gameElement.requestFullscreen();
-            } else if (gameElement.webkitRequestFullscreen) { // Safari
-                gameElement.webkitRequestFullscreen();
-            } else if (gameElement.msRequestFullscreen) { // IE11
-                gameElement.msRequestFullscreen();
+            if (gameContainer.requestFullscreen) {
+                gameContainer.requestFullscreen();
+            } else if (gameContainer.webkitRequestFullscreen) { // Safari
+                gameContainer.webkitRequestFullscreen();
+            } else if (gameContainer.msRequestFullscreen) { // IE11
+                gameContainer.msRequestFullscreen();
             }
         });
 
@@ -61,15 +75,16 @@
         }, 10000); // 10000 миллисекунд = 10 секунд
 
         async function saveGameState() {
-            if (gameElement) {
+            if (ruffleInstance) {
                 try {
-                    const ruffleInstance = gameElement.rufflePlayer;
                     const saveState = await ruffleInstance.export_save_state();
                     localStorage.setItem('gameState', JSON.stringify(saveState));
                     console.log('Состояние игры сохранено.');
                 } catch (error) {
                     console.error('Ошибка при сохранении состояния игры:', error);
                 }
+            } else {
+                console.log('Игра еще не загружена.');
             }
         }
 
@@ -78,22 +93,18 @@
             console.log('Сохранение удалено.');
         }
 
-        // Загрузка сохраненного состояния при запуске
-        document.addEventListener('DOMContentLoaded', async () => {
+        async function loadGameState() {
             const savedGameState = localStorage.getItem('gameState');
-            if (savedGameState) {
-                if (gameElement) {
-                    try {
-                        const ruffleInstance = gameElement.rufflePlayer;
-                        const saveState = JSON.parse(savedGameState);
-                        await ruffleInstance.import_save_state(saveState);
-                        console.log('Состояние игры загружено.');
-                    } catch (error) {
-                        console.error('Ошибка при загрузке состояния игры:', error);
-                    }
+            if (savedGameState && ruffleInstance) {
+                try {
+                    const saveState = JSON.parse(savedGameState);
+                    await ruffleInstance.import_save_state(saveState);
+                    console.log('Состояние игры загружено.');
+                } catch (error) {
+                    console.error('Ошибка при загрузке состояния игры:', error);
                 }
             }
-        });
+        }
     </script>
 </body>
 </html>
