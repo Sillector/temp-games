@@ -1,12 +1,99 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-	<meta charset="utf-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title>test</title>
+    <meta charset="UTF-8">
+    <title>Игра SWF с Ruffle</title>
+    <!-- Подключение Ruffle JS -->
+    <script src="https://unpkg.com/ruffle@latest/dist/ruffle.js"></script>
+    <style>
+        #game-container {
+            width: 800px;
+            height: 600px;
+            position: relative;
+        }
+        #controls {
+            margin-top: 10px;
+        }
+    </style>
 </head>
 <body>
-	123
+    <!-- Контейнер для игры -->
+    <div id="game-container">
+        <ruffle-player id="game" style="width:800px; height:600px;" data-swf="https://m.igroutka.ru/ya/25/igra-chudo-ferma.swf"></ruffle-player>
+    </div>
+    <!-- Кнопки управления -->
+    <div id="controls">
+        <button id="fullscreen-btn">На весь экран</button>
+        <button id="save-btn">Сохранить</button>
+        <button id="delete-save-btn">Удалить сохранение</button>
+    </div>
+    <script>
+        // Получение элементов страницы
+        const gameElement = document.getElementById('game');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const saveBtn = document.getElementById('save-btn');
+        const deleteSaveBtn = document.getElementById('delete-save-btn');
 
+        // Функция для перехода в полный экран
+        fullscreenBtn.addEventListener('click', () => {
+            if (gameElement.requestFullscreen) {
+                gameElement.requestFullscreen();
+            } else if (gameElement.webkitRequestFullscreen) { // Safari
+                gameElement.webkitRequestFullscreen();
+            } else if (gameElement.msRequestFullscreen) { // IE11
+                gameElement.msRequestFullscreen();
+            }
+        });
+
+        // Функция сохранения игры
+        saveBtn.addEventListener('click', () => {
+            saveGameState();
+        });
+
+        // Функция удаления сохранения
+        deleteSaveBtn.addEventListener('click', () => {
+            deleteGameState();
+        });
+
+        // Автосохранение каждые 10 секунд
+        setInterval(() => {
+            saveGameState();
+        }, 10000); // 10000 миллисекунд = 10 секунд
+
+        async function saveGameState() {
+            if (gameElement) {
+                try {
+                    const ruffleInstance = gameElement.rufflePlayer;
+                    const saveState = await ruffleInstance.export_save_state();
+                    localStorage.setItem('gameState', JSON.stringify(saveState));
+                    console.log('Состояние игры сохранено.');
+                } catch (error) {
+                    console.error('Ошибка при сохранении состояния игры:', error);
+                }
+            }
+        }
+
+        function deleteGameState() {
+            localStorage.removeItem('gameState');
+            console.log('Сохранение удалено.');
+        }
+
+        // Загрузка сохраненного состояния при запуске
+        document.addEventListener('DOMContentLoaded', async () => {
+            const savedGameState = localStorage.getItem('gameState');
+            if (savedGameState) {
+                if (gameElement) {
+                    try {
+                        const ruffleInstance = gameElement.rufflePlayer;
+                        const saveState = JSON.parse(savedGameState);
+                        await ruffleInstance.import_save_state(saveState);
+                        console.log('Состояние игры загружено.');
+                    } catch (error) {
+                        console.error('Ошибка при загрузке состояния игры:', error);
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>
