@@ -22,7 +22,6 @@
     <!-- Кнопки управления -->
     <div id="controls">
         <button id="fullscreen-btn">На весь экран</button>
-        <button id="save-btn">Сохранить</button>
         <button id="delete-save-btn">Удалить сохранение</button>
     </div>
     <script>
@@ -61,7 +60,7 @@
 
         // Функция сохранения игры
         saveBtn.addEventListener('click', () => {
-            saveGameState();
+            loadGameState();
         });
 
         // Функция удаления сохранения
@@ -105,6 +104,8 @@
                 }
             }
         }
+
+        loadGameState();
     </script>
 </body>
 </html>
